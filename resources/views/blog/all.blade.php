@@ -20,15 +20,25 @@
         <div class="col-8">
             @foreach($posts as $post)
             <div class="col-12">
-                <div class="card card-blog">
+                <div class="card card-blog" id="collapse">
                     <div class="card-image">
                         <a href="#" style="height:200px !important;overflow:hidden">
-                            <img style="height:300px" class="img"
-                                src="http://adamthemes.com/demo/code/cards/images/blog01.jpeg"> </a>
+
+                            <img style="height:300px" class="img" src="
+                                @if($post->file_img) 
+                                {{asset('images/' . $post->file_img)}} 
+                                @else http://adamthemes.com/demo/code/cards/images/blog01.jpeg 
+                                @endif">
+                        </a>
                         <div class="ripple-cont"></div>
                     </div>
                     <div class="table">
                         <div class="d-flex align-items-center justify-content-end">
+                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#commentCreate{{$post->id}}" aria-expanded="false"
+                                aria-controls="commentCreate">
+                                Leave comment
+                            </button>
                             {{-- <h6 class="category text-warnig"><i class="fa fa-university"></i> Law</h6> --}}
                             {{-- @if (Auth::user()->can('update', $post)) --}}
                             <a class="btn btn-sm btn-warning" href="{{route('application-edit', ['id' => $post->id])}}">
@@ -45,6 +55,8 @@
                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                             </form>
                         </div>
+                        <div class=""></div>
+
                         <h4 class="card-caption">
                             <a href="#">
                                 {{ $post->subject }}
@@ -53,6 +65,29 @@
                         <p class="card-description">
                             {{ $post->message }}
                         </p>
+
+                        <span>Comments</span>
+                        <div class="">
+                            @foreach($post->comments as $key => $comment)
+                            <li>{{$key}}:{{$comment->body}}</li>
+                            @endforeach
+                        </div>
+                        <div class="collapse w-100" id="commentCreate{{$post->id}}">
+                            <form action="{{route('commentstore')}}" method="POST">
+                                @csrf
+                                @method('post')
+                                <div class="row align-items-center">
+                                    <div class="col-8">
+                                        <input type="text" name="body" class="form-control" id="">
+                                        <input type="text" name="application_id" class="d-none" value="{{$post->id}}"
+                                            id="">
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-sm btn-primary" type="submit">Saqlash</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
 
                         <div class="ftr">
                             <div class="author">
@@ -68,7 +103,28 @@
             @endforeach
         </div>
         <div class="col-2">
+            <div class="card bg-light" style="height:100vh;position:sticky;top:0">
+                <div class="card-header text-center">
+                    Breaking news
+                </div>
+                <div class="d-flex">
+                    <div class="mx-2">
+                        Top comment
+                    </div>
+                    <div class="">
+                        7
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="mx-2">
+                        Top post
+                    </div>
+                    <div class="">
+                        {{}}
+                    </div>
+                </div>
 
+            </div>
         </div>
     </div>
 

@@ -13,13 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('applications', function (Blueprint $table) {
+        Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
-            $table->text('subject');
-            $table->text('message');
-            $table->text('file_img')->nullable();
-            $table->timestamps();   
+            $table->foreignId('application_id')->constrained()->onDelete('cascade');
+            $table->text('body');
+            $table->timestamps();
         });
     }
 
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('applications');
+        Schema::dropIfExists('comments');
     }
 };

@@ -2,41 +2,76 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CommentEvent;
 use App\Events\PostCreatedEvent;
 use App\Models\Application;
 use App\Models\User;
+use App\Services\ApplicationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ApplicationController extends Controller
 {
+
+
+    public function __construct(protected ApplicationService $service)
+    {
+        
+    }
     public function index()
     {
-        // $posts = Application::leftJoin('users', 'users.id', 'applications.user_id')
-        // ->select("applications.*", 'users.name')
-        // ->orderBy('applications.created_at', 'desc')
-        // ->get();
-        $posts = DB::select("SELECT 
-        applications.*, users.name FROM applications 
-        LEFT JOIN users ON users.id = applications.user_id 
-        ORDER BY applications.created_at DESC");
+        $posts = Application::leftJoin('users', 'users.id', 'applications.user_id')
+        ->select("applications.*", 'users.name')
+        ->orderBy('applications.created_at', 'desc')
+        ->get();
+        // $posts = DB::select("SELECT 
+        // applications.*, users.name FROM applications 
+        // LEFT JOIN users ON users.id = applications.user_id 
+        // ORDER BY applications.created_at DESC");
 
-        $users = User::leftJoin('applications', 'applications.user_id', 'users.id')
+        $usersPost = User::leftJoin('applications', 'applications.user_id', 'users.id')
             ->select('users.*', DB::raw("count(users.id) as soni"))
             ->groupBy('users.id')
             ->orderBy('soni', 'desc')
-            ->first()->toArray();
+            ->first()->toArray();         
 
-        $users2 = DB::select("SELECT
-        u.*, COUNT(u.id) AS soni
-        FROM users AS u
-        LEFT JOIN applications AS a ON a.user_id = u.id
-        GROUP BY u.id
-        ORDER BY soni DESC LIMIT 1")[0];
+        // $users2 = DB::select("SELECT
+        // u.*, COUNT(u.id) AS soni
+        // FROM users AS u
+        // LEFT JOIN applications AS a ON a.user_id = u.id
+        // GROUP BY u.id
+        // ORDER BY soni DESC LIMIT 1")[0];
 
         // dd($users, $users2);
-
+        $top  = $this->topComment();
         return view('blog.all', ['posts' => $posts]);
+    }
+
+
+    public function all()
+    {
+        $applications = $this->service->all();
+        // dd($application);
+        return view('blog.allapp',['applications'=>$applications]);
+    }
+
+    
+    public function topComment(){
+        // $start = Carbon::now()->startOfMonth()->format("Y-m-d");
+        // $end = Carbon::now()->endOfMonth()->format("Y-m-d");
+        // $usersPost = User::leftJoin('comments', 'comments.user_id', 'users.id')
+        //     ->select('users.*', DB::raw("count(users.id) as comsoni"))
+        //     ->whereDate('comments.created_at', date("Y-m-d"))
+        //     ->groupBy('users.id')
+        //     ->orderBy('comsoni', 'desc')
+        //     ->first()->toArray();
+
+        // dd($usersPost);
+
+        
+
+
     }
 
     public function topUsers()
@@ -54,12 +89,22 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         try {
-            Application::create([
+            if($request->hasFile('file_img')){
+                $image = $request->file('file_img');
+                $path = public_path('/images');
+                $original_name = $image->getClientOriginalName().$image->getClientOriginalExtension();
+                $image->move($path, $original_name);
+            }
+            $app = Application::create([
                 'user_id' => auth()->id(),
                 'subject' => $request->subject,
-                'message' => $request->message
+                'message' => $request->message,
+                'file_img' => $original_name
             ]);
-            event(new PostCreatedEvent());
+            
+            // event(new PostCreatedEvent());
+
+            event(new CommentEvent($app));
         } catch (\Throwable $th) {
             dd($th->getMessage());
         }
@@ -107,4 +152,8 @@ class ApplicationController extends Controller
             dd($th->getMessage());
         }
     }
+
+
+
+    
 }
